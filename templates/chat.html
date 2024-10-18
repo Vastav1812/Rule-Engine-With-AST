@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rule Engine Chat</title>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #chatbox { width: 500px; height: 300px; border: 1px solid #ccc; overflow-y: scroll; padding: 10px; }
+        #message { width: 400px; }
+    </style>
+</head>
+<body>
+    <h1>Rule Engine</h1>
+
+    <!-- Chatbox to display messages -->
+    <div id="chatbox"></div>
+
+    <!-- Input to create a new rule -->
+    <div>
+        <h3>Create Rule</h3>
+        Rule: <input type="text" id="rule" placeholder="age > 30"><br>
+        <button onclick="createRule()">Create Rule</button>
+    </div>
+
+    <!-- Input to evaluate an existing rule -->
+    <div>
+        <h3>Evaluate Rule</h3>
+        Rule ID: <input type="text" id="eval_rule_id" placeholder="1"><br>
+        User Data (JSON format): <input type="text" id="user_data" placeholder='{"age": 35}'><br>
+        <button onclick="evaluateRule()">Evaluate Rule</button>
+    </div>
+
+    <!-- Input to combine multiple rules -->
+    <div>
+        <h3>Combine Rules</h3>
+        Rule IDs (comma-separated): <input type="text" id="combine_rule_ids" placeholder="rule1, rule2"><br>
+        Operator (AND/OR): <input type="text" id="combine_operator" placeholder="AND"><br>
+        <button onclick="combineRules()">Combine Rules</button>
+    </div>
+
+    <!-- Link to view the rule database -->
+    <div>
+        <a href="/rules" class="button">View Rule Database</a>
+    </div>
+
+    <script type="text/javascript">
+        var socket = io();
+
+        // Listen for messages from the server
+        socket.on('message', function(data) {
+            var chatbox = document.getElementById('chatbox');
+            chatbox.innerHTML += '<div>' + data + '</div>';
+            chatbox.scrollTop = chatbox.scrollHeight;  // Scroll to the bottom
+        });
+
+        // Function to create a new rule
+        function createRule() {
+            var rule = document.getElementById('rule').value;
+            if (!rule) {
+                alert('Please enter a rule');
+                return;
+            }
+
+            var message = "create rule: " + rule;
+            socket.send(message);  // Send the message to the server
+        }
+
+        // Function to evaluate an existing rule
+        function evaluateRule() {
+            var ruleId = document.getElementById('eval_rule_id').value;
+            var userData = document.getElementById('user_data').value;
+
+            if (!ruleId || !userData) {
+                alert('Please enter rule ID and user data');
+                return;
+            }
+
+            // Try to parse the user data as JSON
+            try {
+                var parsedUserData = JSON.parse(userData);  // Validate user data as JSON
+                var message = "evaluate rule: " + ruleId + ": " + JSON.stringify(parsedUserData);
+                socket.send(message);  // Send the message to the server
+            } catch (e) {
+                alert('Invalid JSON format in user data. Example: {"age": 35, "department": "Sales"}');
+            }
+        }
+
+        // Function to combine multiple rules
+        function combineRules() {
+            var ruleIds = document.getElementById('combine_rule_ids').value;
+            var operator = document.getElementById('combine_operator').value;
+
+            if (!ruleIds || !operator) {
+                alert('Please enter rule IDs and an operator');
+                return;
+            }
+
+            var message = "combine rules: " + ruleIds + ": " + operator;
+            socket.send(message);  // Send the message to the server
+        }
+    </script>
+</body>
+</html>
